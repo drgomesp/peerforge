@@ -1,11 +1,9 @@
 # peerforge
 
-[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
-TODO: Put more badges here.
-
 Peerforge is a decentralized protocol for code sharing and collaboration.
 
-TODO: Fill out this long description.
+[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+
 
 ## Table of Contents
 
