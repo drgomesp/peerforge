@@ -18,7 +18,7 @@ func init() {
 
 func main() {
 	app := &cli.App{
-		Name: "📡 pfgcli",
+		Name: "📡 peerforge-cli",
 		Commands: []*cli.Command{
 			{
 				Name:      "init",

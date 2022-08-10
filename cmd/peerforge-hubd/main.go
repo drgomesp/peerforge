@@ -16,7 +16,7 @@ func init() {
 
 func main() {
 	app := &cli.App{
-		Name:     "📡 hubd",
+		Name:     "📡 peerforge-hubd",
 		Commands: []*cli.Command{},
 	}
 
