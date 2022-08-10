@@ -9,7 +9,7 @@ TODO: Fill out this long description.
 
 ## Table of Contents
 
-- [Security](#security)
+- [Introduction](#introduction)
 - [Background](#background)
 - [Install](#install)
 - [Usage](#usage)
@@ -17,7 +17,15 @@ TODO: Fill out this long description.
 - [Contributing](#contributing)
 - [License](#license)
 
-## Security
+## Introduction
+
+**Peerforge** is a decentralized code sharing and collaboration network designed on
+open protocols and modular components.
+
+To interact with the network, users can use the following apps/clients:
+
+- `peerforge-cli` The main CLI for repository management and code collaboration
+- `peerforged` - The Peerforge node daemon which manages an IPFS Lite and a Tendermint Light Client node. 
 
 ## Background
 

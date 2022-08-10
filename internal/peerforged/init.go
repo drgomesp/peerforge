@@ -19,7 +19,7 @@ var (
 	ErrRepositoryAlreadyInitialized = errors.New("repository already initialized")
 )
 
-var ConfigFileName = ".peerforged.yaml"
+var ConfigFileName = ".peerforge.yaml"
 var DefaultConfig = `{"foo": "bar"}`
 
 // Init initializes an empty Peerforge repository at a given
@@ -86,7 +86,7 @@ func Init(dir string) (err error) {
 
 		commit, err := w.Commit("initialized Peerforge 📡 repository", &git.CommitOptions{
 			Author: &object.Signature{
-				Name: "peerforged",
+				Name: "peerforge",
 				When: time.Now(),
 			},
 		})
@@ -105,7 +105,7 @@ func Init(dir string) (err error) {
 		return ErrRepositoryAlreadyInitialized
 	}
 
-	remoteName := "peerforged"
+	remoteName := "peerforge"
 	_, err = r.CreateRemote(&config.RemoteConfig{
 		Name: remoteName,
 		URLs: []string{"pfg://"},

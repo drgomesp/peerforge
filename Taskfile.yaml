@@ -16,7 +16,7 @@ tasks:
 
   build:
     deps:
-      - build:peerforged
+      - build:peerforge
       - build:git-remote-pfg
     silent: false
 
@@ -29,7 +29,7 @@ tasks:
   build:peerforged:
     summary:
     cmds:
-      - sudo go build -o /usr/local/bin/peerforged cmd/peerforged/*
+      - sudo go build -o /usr/local/bin/peerforge cmd/peerforge/*
     silent: false
 
   build:git-remote-pfg:
