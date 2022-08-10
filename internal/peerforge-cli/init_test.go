@@ -1,4 +1,4 @@
-package peerforged_test
+package peerforge_cli_test
 
 import (
 	"os"
@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 
-	"peerforge/internal/pfgcli"
+	peerforgecli "github.com/drgomesp/peerforge/internal/peerforge-cli"
 )
 
 func init() {
@@ -42,7 +42,7 @@ func TestInitRepository(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.NoError(t, pfgcli.Init(tt.args.dir))
+			assert.NoError(t, peerforgecli.Init(tt.args.dir))
 			teardownTest(t, tt.args.dir)
 		})
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	"github.com/drgomesp/peerforge/internal/peerforged"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -17,18 +16,8 @@ func init() {
 
 func main() {
 	app := &cli.App{
-		Name: "📡 pfgcli",
-		Commands: []*cli.Command{
-			{
-				Name:      "init",
-				Aliases:   []string{"i"},
-				Usage:     `Initializes a project at a given directory`,
-				ArgsUsage: "[dir]",
-				Action: func(ctx *cli.Context) error {
-					return peerforged.Init(ctx.Args().Get(0))
-				},
-			},
-		},
+		Name:     "📡 hubd",
+		Commands: []*cli.Command{},
 	}
 
 	if err := app.Run(os.Args); err != nil {

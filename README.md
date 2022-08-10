@@ -22,8 +22,8 @@ open protocols and modular components.
 
 To interact with the network, users can use the following apps/clients:
 
-- `peerforge-cli` The main CLI for repository management and code collaboration
-- `peerforged` - The Peerforge node daemon which manages an IPFS Lite and a Tendermint Light Client node. 
+- **[peerforge]()**` - The main CLI for repository management and code collaboration
+- **[hubd]()**` - The Hub Node daemon, which hosts a repository index and registry. 
 
 ## Background
 

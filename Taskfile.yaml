@@ -16,24 +16,16 @@ tasks:
 
   build:
     deps:
-      - build:peerforge
+      - build:hubd
       - build:git-remote-pfg
     silent: false
 
-  build:chain:
-    summary: Serve the blockchain using Ignite
+  build:hubd:
     cmds:
-      - ignite chain build
-    silent: false
-
-  build:peerforged:
-    summary:
-    cmds:
-      - sudo go build -o /usr/local/bin/peerforge cmd/peerforge/*
+      - sudo go build -o /usr/local/bin/hubd cmd/hubd/*
     silent: false
 
   build:git-remote-pfg:
-      summary:
       cmds:
         - sudo go build -o /usr/local/bin/git-remote-pfg cmd/git-remote-pfg/*
       silent: false
