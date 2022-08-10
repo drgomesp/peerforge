@@ -22,7 +22,7 @@ tasks:
 
   build:hubd:
     cmds:
-      - sudo go build -o /usr/local/bin/hubd cmd/hubd/*
+      - sudo go build -o /usr/local/bin/hubd cmd/peerforge-hubd/*
     silent: false
 
   build:git-remote-pfg:
