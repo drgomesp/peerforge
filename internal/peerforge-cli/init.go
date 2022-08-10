@@ -19,8 +19,11 @@ var (
 	ErrRepositoryAlreadyInitialized = errors.New("repository already initialized")
 )
 
-var ConfigFileName = ".hubd.yaml"
-var DefaultConfig = `{"foo": "bar"}`
+const (
+	RemoteName     = "peerforge"
+	ConfigFileName = ".peerforge.yaml"
+	DefaultConfig  = `{"foo": "bar"}`
+)
 
 // Init initializes an empty Peerforge repository at a given
 // directory or existing repository directory.
@@ -105,7 +108,7 @@ func Init(dir string) (err error) {
 		return ErrRepositoryAlreadyInitialized
 	}
 
-	remoteName := "hubd"
+	remoteName := RemoteName
 	_, err = r.CreateRemote(&config.RemoteConfig{
 		Name: remoteName,
 		URLs: []string{"pfg://"},
