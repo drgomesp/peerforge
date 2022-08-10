@@ -1,0 +1,39 @@
+version: "3"
+
+tasks:
+  docs:start:
+    summary: "Calls yarn start in docs directory"
+    cmds:
+      - yarn start
+    silent: true
+    dir: docs
+
+  chain:serve:
+    summary: Serve the blockchain using Ignite
+    cmds:
+      - ignite chain serve
+    silent: true
+
+  build:
+    deps:
+      - build:peerforged
+      - build:git-remote-pfg
+    silent: false
+
+  build:chain:
+    summary: Serve the blockchain using Ignite
+    cmds:
+      - ignite chain build
+    silent: false
+
+  build:peerforged:
+    summary:
+    cmds:
+      - sudo go build -o /usr/local/bin/peerforged cmd/peerforged/*
+    silent: false
+
+  build:git-remote-pfg:
+      summary:
+      cmds:
+        - sudo go build -o /usr/local/bin/git-remote-pfg cmd/git-remote-pfg/*
+      silent: false
