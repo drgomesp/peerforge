@@ -1,4 +1,4 @@
-package peerforge_cli_test
+package peerforgecli_test
 
 import (
 	"os"

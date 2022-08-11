@@ -1,4 +1,4 @@
-package peerforge_cli
+package peerforgecli
 
 import (
 	"errors"
@@ -117,8 +117,6 @@ func Init(dir string) (err error) {
 		_ = w.Reset(&git.ResetOptions{Commit: headRef.Hash()})
 		return err
 	}
-
-	// TODO
 
 	return nil
 }
