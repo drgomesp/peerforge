@@ -1,6 +1,7 @@
 package abci
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"github.com/tendermint/tendermint/abci/types"
 )
 
@@ -17,11 +18,17 @@ func NewApplication() *Application {
 }
 
 func (a Application) CheckTx(req types.RequestCheckTx) types.ResponseCheckTx {
+	tx := req.GetTx()
+
+	_ = tx
 	return types.ResponseCheckTx{
 		Code: types.CodeTypeOK,
 	}
 }
 
 func (a Application) DeliverTx(req types.RequestDeliverTx) types.ResponseDeliverTx {
-	return types.ResponseDeliverTx{Code: types.CodeTypeOK}
+	tx := req.GetTx()
+
+	spew.Dump(string(tx))
+	return types.ResponseDeliverTx{Code: types.CodeTypeOK, Data: tx}
 }

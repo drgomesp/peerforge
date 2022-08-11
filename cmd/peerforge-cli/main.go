@@ -3,12 +3,12 @@ package main
 import (
 	"os"
 
+	"github.com/drgomesp/peerforge/internal/peerforge-cli/repository"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/urfave/cli/v2"
-
-	cli2 "github.com/drgomesp/peerforge/internal/peerforge-cli"
 )
 
 func init() {
@@ -26,7 +26,14 @@ func main() {
 				Usage:     `Initializes a project at a given directory`,
 				ArgsUsage: "[dir]",
 				Action: func(ctx *cli.Context) error {
-					return cli2.Init(ctx.Args().Get(0))
+					abci, err := rpchttp.New("http://localhost:26657")
+					if err != nil {
+						return err
+					}
+
+					initializer := repository.NewInitializer(abci)
+
+					return initializer.Init(ctx.Args().Get(0))
 				},
 			},
 		},
