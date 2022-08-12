@@ -1,15 +1,14 @@
-package peerforgecli_test
+package repository_test
 
 import (
 	"os"
 	"path"
 	"testing"
 
+	"github.com/drgomesp/peerforge/internal/peerforge-cli/repository"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
-
-	peerforgecli "github.com/drgomesp/peerforge/internal/peerforge-cli"
 )
 
 func init() {
@@ -42,7 +41,8 @@ func TestInitRepository(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.NoError(t, peerforgecli.Init(tt.args.dir))
+			initializer := repository.NewInitializer(nil)
+			assert.NoError(t, initializer.Init(tt.args.dir))
 			teardownTest(t, tt.args.dir)
 		})
 	}
