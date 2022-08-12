@@ -15,7 +15,9 @@ import (
 	"github.com/drgomesp/peerforge/pkg/event"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/tendermint/tendermint/rpc/client"
 )
@@ -77,7 +79,9 @@ func (i *Initializer) Init(dir string) (err error) {
 
 	headRef, err := r.Head()
 	if err != nil {
-		return err
+		if err != plumbing.ErrReferenceNotFound {
+			return err
+		}
 	}
 
 	w, err := r.Worktree()
@@ -127,7 +131,9 @@ func (i *Initializer) Init(dir string) (err error) {
 		URLs: []string{"pfg://"},
 	})
 	if err != nil {
-		_ = w.Reset(&git.ResetOptions{Commit: headRef.Hash()})
+		if headRef != nil {
+			_ = w.Reset(&git.ResetOptions{Commit: headRef.Hash()})
+		}
 		return err
 	}
 
@@ -138,24 +144,30 @@ func (i *Initializer) Init(dir string) (err error) {
 	data, err := json.Marshal(EventsTx{Events: []*peerforge.Event{
 		peerforge.NewEvent(
 			event.RepositoryInitialized,
-			headRef.String(),
+			uuid.New().String(),
 			1,
 			"peerforge.hubd",
 		),
 	}})
 	if err != nil {
-		_ = w.Reset(&git.ResetOptions{Commit: headRef.Hash()})
+		if headRef != nil {
+			_ = w.Reset(&git.ResetOptions{Commit: headRef.Hash()})
+		}
 		return err
 	}
 
 	res, err := i.abci.BroadcastTxCommit(context.Background(), data)
 	if err != nil {
-		_ = w.Reset(&git.ResetOptions{Commit: headRef.Hash()})
+		if headRef != nil {
+			_ = w.Reset(&git.ResetOptions{Commit: headRef.Hash()})
+		}
 		return err
 	}
 
 	if res.CheckTx.IsErr() || res.DeliverTx.IsErr() {
-		_ = w.Reset(&git.ResetOptions{Commit: headRef.Hash()})
+		if headRef != nil {
+			_ = w.Reset(&git.ResetOptions{Commit: headRef.Hash()})
+		}
 		return err
 	}
 
