@@ -1,8 +1,16 @@
 package abci
 
 import (
+	"encoding/json"
+
 	"github.com/davecgh/go-spew/spew"
+	peerforge "github.com/drgomesp/peerforge/pkg"
 	"github.com/tendermint/tendermint/abci/types"
+)
+
+const (
+	_ = iota
+	ErrCodeInvalidTx
 )
 
 var _ types.Application = Application{}
@@ -18,17 +26,35 @@ func NewApplication() *Application {
 }
 
 func (a Application) CheckTx(req types.RequestCheckTx) types.ResponseCheckTx {
-	tx := req.GetTx()
+	var tx struct {
+		Events []*peerforge.Event `json:"events"`
+	}
+	if err := json.Unmarshal(req.GetTx(), &tx); err != nil {
+		return types.ResponseCheckTx{
+			Code: ErrCodeInvalidTx,
+			Info: err.Error(),
+		}
+	}
 
-	_ = tx
 	return types.ResponseCheckTx{
 		Code: types.CodeTypeOK,
 	}
 }
 
 func (a Application) DeliverTx(req types.RequestDeliverTx) types.ResponseDeliverTx {
-	tx := req.GetTx()
+	data := string(req.GetTx())
+	var tx struct {
+		Events []*peerforge.Event `json:"events"`
+	}
+	if err := json.Unmarshal(req.GetTx(), &tx); err != nil {
+		return types.ResponseDeliverTx{
+			Code: ErrCodeInvalidTx,
+			Info: err.Error(),
+		}
+	}
 
-	spew.Dump(string(tx))
-	return types.ResponseDeliverTx{Code: types.CodeTypeOK, Data: tx}
+	_ = data
+	spew.Dump(tx)
+
+	return types.ResponseDeliverTx{Code: types.CodeTypeOK, Data: req.GetTx()}
 }

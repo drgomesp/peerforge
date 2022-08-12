@@ -139,7 +139,7 @@ func (i *Initializer) Init(dir string) (err error) {
 		peerforge.NewEvent(
 			event.RepositoryInitialized,
 			headRef.String(),
-			3,
+			1,
 			"peerforge.hubd",
 		),
 	}})
