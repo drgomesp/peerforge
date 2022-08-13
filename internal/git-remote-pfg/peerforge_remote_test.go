@@ -1,28 +1,67 @@
 package gitremotepfg_test
 
 import (
+	"context"
 	"os"
 	"path"
 	"strings"
 	"testing"
 
 	gitremotego "github.com/drgomesp/git-remote-go"
-	gitremotepfg "github.com/drgomesp/peerforge/internal/git-remote-pfg"
 	"github.com/go-git/go-git/v5"
 	"github.com/ipfs-shipyard/git-remote-ipld/core"
-	ipfs "github.com/ipfs/go-ipfs-api"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/tendermint/tendermint/libs/bytes"
+	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/rpc/coretypes"
+	"github.com/tendermint/tendermint/types"
+
+	gitremotepfg "github.com/drgomesp/peerforge/internal/git-remote-pfg"
 )
+
+type abciClientMock struct {
+	mock.Mock
+}
+
+func (a abciClientMock) ABCIInfo(ctx context.Context) (*coretypes.ResultABCIInfo, error) {
+	args := a.Called(ctx)
+	return args.Get(0).(*coretypes.ResultABCIInfo), args.Error(1)
+}
+
+func (a abciClientMock) ABCIQuery(ctx context.Context, path string, data bytes.HexBytes) (*coretypes.ResultABCIQuery, error) {
+	args := a.Called(ctx, path, data)
+	return args.Get(0).(*coretypes.ResultABCIQuery), args.Error(1)
+}
+
+func (a abciClientMock) ABCIQueryWithOptions(ctx context.Context, path string, data bytes.HexBytes, opts client.ABCIQueryOptions) (*coretypes.ResultABCIQuery, error) {
+	args := a.Called(ctx, path, data)
+	return args.Get(0).(*coretypes.ResultABCIQuery), args.Error(1)
+}
+
+func (a abciClientMock) BroadcastTxCommit(ctx context.Context, tx types.Tx) (*coretypes.ResultBroadcastTxCommit, error) {
+	args := a.Called(ctx, tx)
+	return args.Get(0).(*coretypes.ResultBroadcastTxCommit), args.Error(1)
+}
+
+func (a abciClientMock) BroadcastTxAsync(ctx context.Context, tx types.Tx) (*coretypes.ResultBroadcastTx, error) {
+	args := a.Called(ctx, tx)
+	return args.Get(0).(*coretypes.ResultBroadcastTx), args.Error(1)
+}
+
+func (a abciClientMock) BroadcastTxSync(ctx context.Context, tx types.Tx) (*coretypes.ResultBroadcastTx, error) {
+	args := a.Called(ctx, tx)
+	return args.Get(0).(*coretypes.ResultBroadcastTx), args.Error(1)
+}
 
 const EmptyRepo = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
 
 func init() {
 	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-
 }
 
 func TestIPFS_Capabilities(t *testing.T) {
@@ -43,7 +82,8 @@ func TestIPFS_Capabilities(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			remote := setupTest(t, EmptyRepo)
+			abciClientMock := new(abciClientMock)
+			remote := setupTest(t, abciClientMock, EmptyRepo)
 			capab := remote.Capabilities()
 
 			log.Trace().Msgf(">\n%s", capab)
@@ -70,7 +110,8 @@ func TestIPFS_Push(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			remote := setupTest(t, EmptyRepo)
+			abciClientMock := new(abciClientMock)
+			remote := setupTest(t, abciClientMock, EmptyRepo)
 
 			push, err := remote.Push(
 				tt.fields.localRef,
@@ -111,7 +152,8 @@ func TestIPFS_List(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			remote := setupTest(t, tt.fields.remoteName)
+			abciClientMock := new(abciClientMock)
+			remote := setupTest(t, abciClientMock, tt.fields.remoteName)
 
 			list, err := remote.List(false)
 			assert.NoError(t, remote.Finish())
@@ -148,11 +190,13 @@ func TestIPFS_Fetch(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			remote := setupTest(t, tt.fields.remoteName)
+			abciClientMock := new(abciClientMock)
+			remote := setupTest(t, abciClientMock, tt.fields.remoteName)
 
 			list, err := remote.List(false)
 			assert.NoError(t, remote.Finish())
 			log.Trace().Msgf(">\n%s", strings.Join(list, "\n"))
+			teardownTest(t)
 
 			assert.NoError(t, err)
 			assert.NotEmpty(t, list)
@@ -161,14 +205,13 @@ func TestIPFS_Fetch(t *testing.T) {
 	}
 }
 
-func setupTest(t *testing.T, remoteName string) *gitremotepfg.PeerforgeRemote {
+func setupTest(t *testing.T, abciClient client.ABCIClient, remoteName string) *gitremotepfg.PeerforgeRemote {
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Err(err).Send()
 	}
 
 	_ = os.Setenv("GIT_DIR", path.Join(cwd, "..", "..", "testutil", "git"))
-	_ = os.Setenv(ipfs.EnvDir, "localhost:5001")
 
 	localDir, err := core.GetLocalDir()
 	if err != nil {
@@ -190,11 +233,18 @@ func setupTest(t *testing.T, remoteName string) *gitremotepfg.PeerforgeRemote {
 		t.Fatal(err)
 	}
 
-	remote, err := gitremotepfg.NewPeerforgeRemote(remoteName)
+	ipfsPath := "localhost:45005" // brave browser IPFS
+	remote, err := gitremotepfg.NewPeerforgeRemote(abciClient, ipfsPath, remoteName)
 	assert.NoError(t, err)
 	assert.NotNil(t, remote)
 
 	assert.NoError(t, remote.Initialize(tracker, repo))
 
 	return remote
+}
+
+func teardownTest(t *testing.T) {
+	cwd, _ := os.Getwd()
+	gitDir := path.Join(cwd, "..", "..", "testutil", "git")
+	assert.NoError(t, os.RemoveAll(path.Join(cwd, gitDir)))
 }

@@ -13,8 +13,6 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/drgomesp/git-remote-go"
-	peerforge "github.com/drgomesp/peerforge/pkg"
-	"github.com/drgomesp/peerforge/pkg/event"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/google/uuid"
@@ -24,6 +22,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/tendermint/tendermint/rpc/client"
 	gitv4 "gopkg.in/src-d/go-git.v4"
+
+	peerforge "github.com/drgomesp/peerforge/pkg"
+	"github.com/drgomesp/peerforge/pkg/event"
 )
 
 const (
@@ -218,6 +219,10 @@ func (p *PeerforgeRemote) Initialize(tracker *core.Tracker, repo *git.Repository
 
 	spew.Dump(string(data))
 	res, err := p.abci.BroadcastTxCommit(context.Background(), data)
+	if err != nil {
+		return err
+	}
+	
 	if res.CheckTx.IsErr() || res.DeliverTx.IsErr() {
 		return err
 	}
