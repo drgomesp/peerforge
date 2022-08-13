@@ -2,6 +2,8 @@ package gitremotepfg
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -9,13 +11,18 @@ import (
 	"path"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/drgomesp/git-remote-go"
+	peerforge "github.com/drgomesp/peerforge/pkg"
+	"github.com/drgomesp/peerforge/pkg/event"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/google/uuid"
 	"github.com/ipfs-shipyard/git-remote-ipld/core"
 	"github.com/ipfs/go-cid"
 	ipfs "github.com/ipfs/go-ipfs-api"
 	"github.com/rs/zerolog/log"
+	"github.com/tendermint/tendermint/rpc/client"
 	gitv4 "gopkg.in/src-d/go-git.v4"
 )
 
@@ -41,6 +48,7 @@ var _ gitremotego.ProtocolHandler = &PeerforgeRemote{}
 type PeerforgeRemote struct {
 	ipfs *ipfs.Shell
 	repo *git.Repository
+	abci client.ABCIClient
 
 	tracker                 *core.Tracker
 	didPush                 bool
@@ -49,8 +57,8 @@ type PeerforgeRemote struct {
 	localDir                string
 }
 
-func NewPeerforgeRemote(remoteName string) (*PeerforgeRemote, error) {
-	ipfsShell := ipfs.NewShell("localhost:5001")
+func NewPeerforgeRemote(abci client.ABCIClient, ipfsPath string, remoteName string) (*PeerforgeRemote, error) {
+	ipfsShell := ipfs.NewShell(ipfsPath)
 
 	if ipfsShell == nil {
 		return nil, errors.New("failed to initialize protocol shell")
@@ -73,7 +81,7 @@ func NewPeerforgeRemote(remoteName string) (*PeerforgeRemote, error) {
 		}
 	}
 
-	return &PeerforgeRemote{ipfs: ipfsShell, repo: repo, remoteName: remoteName}, nil
+	return &PeerforgeRemote{ipfs: ipfsShell, repo: repo, abci: abci, remoteName: remoteName}, nil
 }
 
 func (p *PeerforgeRemote) Finish() error {
@@ -194,6 +202,25 @@ func (p *PeerforgeRemote) Initialize(tracker *core.Tracker, repo *git.Repository
 	p.localDir = localDir
 	p.repo = repo
 	p.tracker = tracker
+
+	type EventsTx struct {
+		Events []*peerforge.Event `json:"events"`
+	}
+
+	data, err := json.Marshal(EventsTx{Events: []*peerforge.Event{
+		peerforge.NewEvent(
+			event.RepositoryInitialized,
+			uuid.New().String(),
+			1,
+			"peerforge.hubd",
+		),
+	}})
+
+	spew.Dump(string(data))
+	res, err := p.abci.BroadcastTxCommit(context.Background(), data)
+	if res.CheckTx.IsErr() || res.DeliverTx.IsErr() {
+		return err
+	}
 
 	return nil
 }

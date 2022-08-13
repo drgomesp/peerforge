@@ -10,6 +10,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 const EmptyRepo = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
@@ -19,7 +20,9 @@ func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	// TODO: remove this
-	_ = os.Setenv(shell.EnvDir, "localhost:5001")
+	if os.Getenv(shell.EnvDir) == "" {
+		_ = os.Setenv(shell.EnvDir, "localhost:5001")
+	}
 }
 
 func main() {
@@ -40,7 +43,12 @@ func main() {
 		log.Fatal().Msg("missing repository path ($GIT_DIR)")
 	}
 
-	handler, err := gitremote.NewPeerforgeRemote(remoteName)
+	abci, err := rpchttp.New("http://localhost:26657")
+	if err != nil {
+		log.Err(err).Send()
+	}
+
+	handler, err := gitremote.NewPeerforgeRemote(abci, os.Getenv(shell.EnvDir), remoteName)
 	if err != nil {
 		log.Err(err).Send()
 	}

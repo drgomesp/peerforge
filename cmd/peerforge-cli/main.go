@@ -7,7 +7,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
+
 	"github.com/urfave/cli/v2"
 )
 
@@ -26,12 +26,7 @@ func main() {
 				Usage:     `Initializes a project at a given directory`,
 				ArgsUsage: "[dir]",
 				Action: func(ctx *cli.Context) error {
-					abci, err := rpchttp.New("http://localhost:26657")
-					if err != nil {
-						return err
-					}
-
-					initializer := repository.NewInitializer(abci)
+					initializer := repository.NewInitializer()
 
 					return initializer.Init(ctx.Args().Get(0))
 				},
