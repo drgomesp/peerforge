@@ -20,11 +20,11 @@ import (
 	tendermintnode "github.com/tendermint/tendermint/node"
 	"github.com/urfave/cli/v2"
 
-	"github.com/drgomesp/peerforge/internal/peerforge-hubd/abci"
 	_ "github.com/drgomesp/peerforge/internal/peerforge-hubd/abci"
+	"github.com/drgomesp/peerforge/internal/peerhubdd/abci"
 )
 
-//var socketAddr string
+// var socketAddr string
 var configFile string
 
 func init() {
@@ -38,7 +38,7 @@ func init() {
 
 func main() {
 	app := &cli.App{
-		Name: "📡 peerforge-hubd",
+		Name: "📡 peerhubdd",
 		Action: func(context *cli.Context) error {
 			app := abci.NewApplication()
 
