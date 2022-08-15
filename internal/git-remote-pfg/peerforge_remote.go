@@ -357,6 +357,9 @@ func (p *PeerforgeRemote) Push(local string, remote string) (string, error) {
 	}})
 
 	res, err := p.abci.BroadcastTxCommit(context.Background(), data)
+	if err != nil {
+		return "", err
+	}
 	if res.CheckTx.IsErr() || res.DeliverTx.IsErr() {
 		log.Debug().Msgf(err.Error())
 		log.Err(err).Send()
