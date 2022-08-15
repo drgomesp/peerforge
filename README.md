@@ -22,7 +22,7 @@ open protocols and modular components.
 
 To interact with the network, users can use the following apps/clients:
 
-- **[peerforge-cli]()**` - The main CLI for repository management and code collaboration.
+- **[peerforge-cli]()** - The main CLI for repository management and code collaboration.
 - **[peerhubd]()**` - The PeerHub Node daemon, which interacts with the network and hosts a repository index and registry. 
 
 ## Background
