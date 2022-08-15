@@ -11,8 +11,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/drgomesp/git-remote-go"
+	peerforge "github.com/drgomesp/peerforge/pkg"
+	"github.com/drgomesp/peerforge/pkg/event"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/google/uuid"
@@ -22,9 +23,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/tendermint/tendermint/rpc/client"
 	gitv4 "gopkg.in/src-d/go-git.v4"
-
-	peerforge "github.com/drgomesp/peerforge/pkg"
-	"github.com/drgomesp/peerforge/pkg/event"
 )
 
 const (
@@ -85,6 +83,26 @@ func NewPeerforgeRemote(abci client.ABCIClient, ipfsPath string, remoteName stri
 	return &PeerforgeRemote{ipfs: ipfsShell, repo: repo, abci: abci, remoteName: remoteName}, nil
 }
 
+func (p *PeerforgeRemote) Initialize(tracker *core.Tracker, repo *git.Repository) error {
+	p.repo = repo
+	p.currentHash = p.remoteName
+
+	localDir, err := gitremotego.GetLocalDir()
+	if err != nil {
+		return err
+	}
+
+	repo, err = git.PlainOpen(localDir)
+	if err != nil {
+		return err
+	}
+
+	p.localDir = localDir
+	p.repo = repo
+	p.tracker = tracker
+
+	return nil
+}
 func (p *PeerforgeRemote) Finish() error {
 	//TODO: publish
 	if p.didPush {
@@ -184,50 +202,6 @@ func (p *PeerforgeRemote) ProvideBlock(identifier string, tracker *core.Tracker)
 	}
 
 	return data, nil
-}
-
-func (p *PeerforgeRemote) Initialize(tracker *core.Tracker, repo *git.Repository) error {
-	p.repo = repo
-	p.currentHash = p.remoteName
-
-	localDir, err := gitremotego.GetLocalDir()
-	if err != nil {
-		return err
-	}
-
-	repo, err = git.PlainOpen(localDir)
-	if err != nil {
-		return err
-	}
-
-	p.localDir = localDir
-	p.repo = repo
-	p.tracker = tracker
-
-	type EventsTx struct {
-		Events []*peerforge.Event `json:"events"`
-	}
-
-	data, err := json.Marshal(EventsTx{Events: []*peerforge.Event{
-		peerforge.NewEvent(
-			event.RepositoryInitialized,
-			uuid.New().String(),
-			1,
-			"peerforge.hubd",
-		),
-	}})
-
-	spew.Dump(string(data))
-	res, err := p.abci.BroadcastTxCommit(context.Background(), data)
-	if err != nil {
-		return err
-	}
-	
-	if res.CheckTx.IsErr() || res.DeliverTx.IsErr() {
-		return err
-	}
-
-	return nil
 }
 
 func (p *PeerforgeRemote) Capabilities() string {
@@ -366,6 +340,27 @@ func (p *PeerforgeRemote) Push(local string, remote string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("push: %v", err)
 		}
+	}
+
+	log.Debug().Msgf("sending event transaction...")
+	type EventsTx struct {
+		Events []*peerforge.Event `json:"events"`
+	}
+
+	data, err := json.Marshal(EventsTx{Events: []*peerforge.Event{
+		peerforge.NewEvent(
+			event.RepositoryInitialized,
+			uuid.New().String(),
+			1,
+			"peerforge.hubd",
+		),
+	}})
+
+	res, err := p.abci.BroadcastTxCommit(context.Background(), data)
+	if res.CheckTx.IsErr() || res.DeliverTx.IsErr() {
+		log.Debug().Msgf(err.Error())
+		log.Err(err).Send()
+		return "", err
 	}
 
 	return local, nil

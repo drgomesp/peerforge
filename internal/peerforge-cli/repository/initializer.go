@@ -131,7 +131,7 @@ func (i *Initializer) Init(dir string) (err error) {
 	}
 
 	log.Info().Msgf("Repository initialized.")
-	log.Info().Msgf("Push to the new remote by running: git push peerforge")
+	log.Info().Msgf("Push your changes to the PeerForge remote: git push peerforge {branch}")
 
 	return nil
 }

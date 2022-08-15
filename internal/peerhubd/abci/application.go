@@ -3,7 +3,6 @@ package abci
 import (
 	"encoding/json"
 
-	"github.com/davecgh/go-spew/spew"
 	peerforge "github.com/drgomesp/peerforge/pkg"
 	"github.com/tendermint/tendermint/abci/types"
 )
@@ -54,7 +53,6 @@ func (a Application) DeliverTx(req types.RequestDeliverTx) types.ResponseDeliver
 	}
 
 	_ = data
-	spew.Dump(tx)
 
 	return types.ResponseDeliverTx{Code: types.CodeTypeOK, Data: req.GetTx()}
 }
