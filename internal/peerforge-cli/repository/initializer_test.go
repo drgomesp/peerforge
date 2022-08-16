@@ -5,9 +5,8 @@ import (
 	"path"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/drgomesp/peerforge/internal/peerforge-cli/repository"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInitializer_Init(t *testing.T) {
@@ -25,7 +24,7 @@ func TestInitializer_Init(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			initializer := repository.NewInitializer()
+			initializer := repository.NewInitializer(nil)
 
 			setupTest(t, tt.args.dir)
 			err := initializer.Init(tt.args.dir)

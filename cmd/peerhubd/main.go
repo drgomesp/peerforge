@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/dgraph-io/badger/v3"
 	"github.com/drgomesp/peerforge/internal/peerhubd/abci"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
@@ -25,6 +26,8 @@ import (
 // var socketAddr string
 var configFile string
 
+var homeDir string
+
 func init() {
 	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
@@ -32,13 +35,27 @@ func init() {
 	home := os.Getenv("HOME")
 	flag.StringVar(&configFile, "config", fmt.Sprintf("%s/%s", home, "/.tendermint/config/config.toml"),
 		"Path to config.toml")
+	flag.StringVar(&homeDir, "tm-home", "", "Path to the tendermint config directory (if empty, uses $HOME/.tendermint)")
 }
 
 func main() {
 	app := &cli.App{
 		Name: "📡 peerhubdd",
 		Action: func(context *cli.Context) error {
-			app := abci.NewApplication()
+			if homeDir == "" {
+				homeDir = os.ExpandEnv("$HOME/.tendermint")
+			}
+			dbPath := filepath.Join(homeDir, "badger")
+			db, err := badger.Open(badger.DefaultOptions(dbPath))
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if err := db.Close(); err != nil {
+					log.Err(err).Send()
+				}
+			}()
+			app := abci.NewApplication(db)
 
 			flag.Parse()
 
