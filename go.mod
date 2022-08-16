@@ -8,7 +8,6 @@ replace (
 go 1.18
 
 require (
-	github.com/davecgh/go-spew v1.1.1
 	github.com/drgomesp/git-remote-go v0.0.0-00010101000000-000000000000
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/google/uuid v1.3.0
@@ -16,6 +15,7 @@ require (
 	github.com/ipfs/go-cid v0.2.0
 	github.com/ipfs/go-ipfs-api v0.3.0
 	github.com/joho/godotenv v1.4.0
+	github.com/nuts-foundation/go-did v0.3.0
 	github.com/rs/zerolog v1.27.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.0
@@ -38,6 +38,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/dgraph-io/badger v1.6.2 // indirect
 	github.com/dgraph-io/badger/v2 v2.2007.2 // indirect
@@ -49,6 +50,7 @@ require (
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
+	github.com/goccy/go-json v0.9.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
@@ -68,6 +70,12 @@ require (
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.4 // indirect
+	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.0 // indirect
+	github.com/lestrrat-go/httpcc v1.0.0 // indirect
+	github.com/lestrrat-go/iter v1.0.1 // indirect
+	github.com/lestrrat-go/jwx v1.2.18 // indirect
+	github.com/lestrrat-go/option v1.0.0 // indirect
 	github.com/lib/pq v1.10.6 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/libp2p/go-flow-metrics v0.0.3 // indirect
@@ -91,6 +99,7 @@ require (
 	github.com/multiformats/go-multihash v0.0.15 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20210609091139-0a56a4bca00b // indirect
+	github.com/ockam-network/did v0.1.4-0.20210103172416-02ae01ce06d8 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
@@ -106,6 +115,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.2.1-0.20190427202633-1595213edefa // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
+	github.com/shengdoushi/base58 v1.0.0 // indirect
 	github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

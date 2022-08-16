@@ -1,6 +1,11 @@
 package repository
 
 import (
+	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -9,11 +14,19 @@ import (
 	"time"
 
 	gitremotego "github.com/drgomesp/git-remote-go"
+	peerforge "github.com/drgomesp/peerforge/pkg"
+	"github.com/drgomesp/peerforge/pkg/event"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/google/uuid"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
+	ssi "github.com/nuts-foundation/go-did"
+	"github.com/nuts-foundation/go-did/did"
 	"github.com/rs/zerolog/log"
+	"github.com/tendermint/tendermint/rpc/client"
 )
 
 var (
@@ -27,10 +40,13 @@ const (
 )
 
 type Initializer struct {
+	abci client.ABCIClient
 }
 
-func NewInitializer() *Initializer {
-	return &Initializer{}
+func NewInitializer(abci client.ABCIClient) *Initializer {
+	return &Initializer{
+		abci: abci,
+	}
 }
 
 // Init initializes an empty Peerforge repository at a given
@@ -113,6 +129,55 @@ func (i *Initializer) Init(dir string) (err error) {
 			return err
 		}
 
+		_, pubKey, err := crypto.GenerateEd25519Key(rand.Reader)
+		keyPair, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+
+		id, err := peer.IDFromPublicKey(pubKey)
+		if err != nil {
+			return err
+		}
+
+		didID, err := did.ParseDID(fmt.Sprintf("did:pfg:%s", id))
+		if err != nil {
+			return err
+		}
+
+		doc := &did.Document{
+			ID: *didID,
+		}
+
+		keyID, _ := did.ParseDIDURL(fmt.Sprintf("did:pfg:%s#key-1", id))
+		verificationMethod, err := did.NewVerificationMethod(*keyID, ssi.JsonWebKey2020, did.DID{}, keyPair.Public())
+
+		// This adds the method to the VerificationMethod list and stores a reference to the assertion list
+		doc.AddAssertionMethod(verificationMethod)
+
+		didJson, _ := json.MarshalIndent(doc, "", "  ")
+
+		type EventsTx struct {
+			Events []*peerforge.Event `json:"events"`
+		}
+
+		data, err := json.Marshal(EventsTx{Events: []*peerforge.Event{
+			peerforge.NewEvent(
+				event.RepositoryInitialized,
+				uuid.New().String(),
+				1,
+				fmt.Sprintf("did:pfg:%s", id),
+			),
+		}})
+
+		res, err := i.abci.BroadcastTxCommit(context.Background(), data)
+		if err != nil {
+			return err
+		}
+		if res.CheckTx.IsErr() || res.DeliverTx.IsErr() {
+			log.Debug().Msgf(err.Error())
+			log.Err(err).Send()
+			return err
+		}
+
+		log.Debug().Msgf(string(didJson))
 		log.Debug().Msgf(obj.String())
 	} else {
 		return ErrRepositoryAlreadyInitialized

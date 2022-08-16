@@ -16,7 +16,7 @@ import (
 const EmptyRepo = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
 
 func init() {
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	// TODO: remove this
@@ -40,7 +40,12 @@ func main() {
 	}
 
 	if os.Getenv("GIT_DIR") == "" {
-		log.Fatal().Msg("missing repository path ($GIT_DIR)")
+		log.Warn().Msg("missing repository path ($GIT_DIR)... using current directory")
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Err(err).Send()
+		}
+		os.Setenv("GIT_DIR", cwd)
 	}
 
 	abci, err := rpchttp.New("http://localhost:26657")
