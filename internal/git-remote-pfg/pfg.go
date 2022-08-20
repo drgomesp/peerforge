@@ -13,6 +13,7 @@ import (
 
 	ipldgit "github.com/drgomesp/git-remote-ipld/core"
 	"github.com/drgomesp/peerforge/pkg/gitremote"
+	iipfs "github.com/drgomesp/peerforge/pkg/ipfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/ipfs/go-cid"
@@ -46,7 +47,7 @@ type refPath struct {
 var _ gitremote.ProtocolHandler = &Pfg{}
 
 type Pfg struct {
-	ipfs *ipfs.Shell
+	ipfs iipfs.API
 	repo *git.Repository
 	abci client.ABCIClient
 
@@ -210,7 +211,7 @@ func (p *Pfg) List(forPush bool) ([]string, error) {
 	out := make([]string, 0)
 
 	if !forPush {
-		refs, err := p.paths(p.ipfs, p.remoteName, 0)
+		refs, err := p.paths(p.ipfs.(*ipfs.Shell), p.remoteName, 0)
 		if err != nil {
 			return nil, err
 		}
