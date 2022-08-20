@@ -4,8 +4,8 @@ import (
 	"os"
 	"strings"
 
-	gitremotego "github.com/drgomesp/git-remote-go"
-	gitremote "github.com/drgomesp/peerforge/internal/git-remote-pfg"
+	gitremotepfg "github.com/drgomesp/peerforge/internal/git-remote-pfg"
+	"github.com/drgomesp/peerforge/pkg/gitremote"
 	shell "github.com/ipfs/go-ipfs-api"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
@@ -13,21 +13,22 @@ import (
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 )
 
+const IpfsURL = "localhost:45005"
 const EmptyRepo = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
 
 func init() {
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	// TODO: remove this
 	if os.Getenv(shell.EnvDir) == "" {
-		_ = os.Setenv(shell.EnvDir, "localhost:5001")
+		_ = os.Setenv(shell.EnvDir, IpfsURL)
 	}
 }
 
 func main() {
 	if len(os.Args) != 3 {
-		log.Fatal().Msg("git-remote-pfg expects 2 arguments (origin name and url)")
+		log.Fatal().Msg("gitremote-remote-pfg expects 2 arguments (origin name and url)")
 	}
 
 	remoteName := os.Args[2]
@@ -53,12 +54,12 @@ func main() {
 		log.Err(err).Send()
 	}
 
-	handler, err := gitremote.NewPeerforgeRemote(abci, os.Getenv(shell.EnvDir), remoteName)
+	handler, err := gitremotepfg.NewPfg(abci, os.Getenv(shell.EnvDir), remoteName)
 	if err != nil {
 		log.Err(err).Send()
 	}
 
-	proto, err := gitremotego.NewProtocol("prefix", handler)
+	proto, err := gitremote.NewProtocol("prefix", handler)
 	if err != nil {
 		log.Err(err).Send()
 	}

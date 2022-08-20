@@ -13,9 +13,9 @@ import (
 	"path/filepath"
 	"time"
 
-	gitremotego "github.com/drgomesp/git-remote-go"
+	peerforgeevent "github.com/drgomesp/peerforge/internal/git-remote-pfg"
 	peerforge "github.com/drgomesp/peerforge/pkg"
-	"github.com/drgomesp/peerforge/pkg/event"
+	"github.com/drgomesp/peerforge/pkg/gitremote"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -66,7 +66,7 @@ func (i *Initializer) Init(dir string) (err error) {
 	_ = os.Setenv("GIT_DIR", dir)
 	log.Debug().Str("GIT_DIR", dir).Send()
 
-	dir, err = gitremotego.GetLocalDir()
+	dir, err = gitremote.GetLocalDir()
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (i *Initializer) Init(dir string) (err error) {
 
 		data, err := json.Marshal(EventsTx{Events: []*peerforge.Event{
 			peerforge.NewEvent(
-				event.RepositoryInitialized,
+				peerforgeevent.RepositoryInitialized,
 				uuid.New().String(),
 				1,
 				fmt.Sprintf("did:pfg:%s", id),
@@ -196,7 +196,7 @@ func (i *Initializer) Init(dir string) (err error) {
 	}
 
 	log.Info().Msgf("Repository initialized.")
-	log.Info().Msgf("Push your changes to the PeerForge remote: git push peerforge {branch}")
+	log.Info().Msgf("Push your changes to the PeerForge remote: gitremote push peerforge {branch}")
 
 	return nil
 }

@@ -1,23 +1,20 @@
+// Package gitremotepfg implements a ProtocolHandler that
+// stores git objects as IPLD-structured data in IPFS.
 package gitremotepfg
 
 import (
 	"bytes"
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"strings"
 
-	"github.com/drgomesp/git-remote-go"
-	peerforge "github.com/drgomesp/peerforge/pkg"
-	"github.com/drgomesp/peerforge/pkg/event"
+	ipldgit "github.com/drgomesp/git-remote-ipld/core"
+	"github.com/drgomesp/peerforge/pkg/gitremote"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/google/uuid"
-	"github.com/ipfs-shipyard/git-remote-ipld/core"
 	"github.com/ipfs/go-cid"
 	ipfs "github.com/ipfs/go-ipfs-api"
 	"github.com/rs/zerolog/log"
@@ -35,6 +32,10 @@ const (
 	RefPathRef
 )
 
+const (
+	RepositoryInitialized = "repository.Initialized"
+)
+
 type refPath struct {
 	path  string
 	rType int
@@ -42,21 +43,21 @@ type refPath struct {
 	hash string
 }
 
-var _ gitremotego.ProtocolHandler = &PeerforgeRemote{}
+var _ gitremote.ProtocolHandler = &Pfg{}
 
-type PeerforgeRemote struct {
+type Pfg struct {
 	ipfs *ipfs.Shell
 	repo *git.Repository
 	abci client.ABCIClient
 
-	tracker                 *core.Tracker
+	tracker                 *ipldgit.Tracker
 	didPush                 bool
 	largeObjs               map[string]string
 	remoteName, currentHash string
 	localDir                string
 }
 
-func NewPeerforgeRemote(abci client.ABCIClient, ipfsPath string, remoteName string) (*PeerforgeRemote, error) {
+func NewPfg(abci client.ABCIClient, ipfsPath string, remoteName string) (*Pfg, error) {
 	ipfsShell := ipfs.NewShell(ipfsPath)
 
 	if ipfsShell == nil {
@@ -65,7 +66,7 @@ func NewPeerforgeRemote(abci client.ABCIClient, ipfsPath string, remoteName stri
 
 	cwd, _ := os.Getwd()
 
-	localDir, err := gitremotego.GetLocalDir()
+	localDir, err := gitremote.GetLocalDir()
 	if localDir == "" {
 		localDir = cwd
 	}
@@ -80,14 +81,14 @@ func NewPeerforgeRemote(abci client.ABCIClient, ipfsPath string, remoteName stri
 		}
 	}
 
-	return &PeerforgeRemote{ipfs: ipfsShell, repo: repo, abci: abci, remoteName: remoteName}, nil
+	return &Pfg{ipfs: ipfsShell, repo: repo, abci: abci, remoteName: remoteName}, nil
 }
 
-func (p *PeerforgeRemote) Initialize(tracker *core.Tracker, repo *git.Repository) error {
+func (p *Pfg) Initialize(tracker *ipldgit.Tracker, repo *git.Repository) error {
 	p.repo = repo
 	p.currentHash = p.remoteName
 
-	localDir, err := gitremotego.GetLocalDir()
+	localDir, err := gitremote.GetLocalDir()
 	if err != nil {
 		return err
 	}
@@ -103,20 +104,19 @@ func (p *PeerforgeRemote) Initialize(tracker *core.Tracker, repo *git.Repository
 
 	return nil
 }
-func (p *PeerforgeRemote) Finish() error {
+func (p *Pfg) Finish() error {
 	//TODO: publish
 	if p.didPush {
 		if err := p.fillMissingLobjs(p.tracker); err != nil {
 			return err
 		}
 
-		log.Info().Msgf("Pushed to pfg://%s", p.currentHash)
 	}
 
 	return nil
 }
 
-func (p *PeerforgeRemote) fillMissingLobjs(tracker *core.Tracker) error {
+func (p *Pfg) fillMissingLobjs(tracker *ipldgit.Tracker) error {
 	if p.largeObjs == nil {
 		if err := p.loadObjectMap(); err != nil {
 			return err
@@ -129,8 +129,6 @@ func (p *PeerforgeRemote) fillMissingLobjs(tracker *core.Tracker) error {
 	}
 
 	for k, v := range tracked {
-		log.Debug().Msgf("tracked= %v=%v", k, v)
-
 		if _, has := p.largeObjs[k]; has {
 			continue
 		}
@@ -147,7 +145,7 @@ func (p *PeerforgeRemote) fillMissingLobjs(tracker *core.Tracker) error {
 	return nil
 }
 
-func (p *PeerforgeRemote) loadObjectMap() error {
+func (p *Pfg) loadObjectMap() error {
 	p.largeObjs = map[string]string{}
 
 	links, err := p.ipfs.List(p.currentHash + "/" + LargeObjectDir)
@@ -166,7 +164,7 @@ func (p *PeerforgeRemote) loadObjectMap() error {
 	return nil
 }
 
-func (p *PeerforgeRemote) ProvideBlock(identifier string, tracker *core.Tracker) ([]byte, error) {
+func (p *Pfg) ProvideBlock(identifier string, tracker *ipldgit.Tracker) ([]byte, error) {
 	if p.largeObjs == nil {
 		if err := p.loadObjectMap(); err != nil {
 			return nil, err
@@ -175,7 +173,7 @@ func (p *PeerforgeRemote) ProvideBlock(identifier string, tracker *core.Tracker)
 
 	mappedCid, ok := p.largeObjs[identifier]
 	if !ok {
-		return nil, core.ErrNotProvided
+		return nil, ipldgit.ErrNotProvided
 	}
 
 	if err := p.tracker.Set(LobjTrackerPrefix+"/"+identifier, []byte(mappedCid)); err != nil {
@@ -187,12 +185,12 @@ func (p *PeerforgeRemote) ProvideBlock(identifier string, tracker *core.Tracker)
 		return nil, errors.New("cat error")
 	}
 
-	data, err := ioutil.ReadAll(r)
+	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
 
-	realCid, err := p.ipfs.DagPut(data, "raw", "git")
+	realCid, err := p.ipfs.DagPut(data, "raw", "gitremote")
 	if err != nil {
 		return nil, err
 	}
@@ -204,11 +202,11 @@ func (p *PeerforgeRemote) ProvideBlock(identifier string, tracker *core.Tracker)
 	return data, nil
 }
 
-func (p *PeerforgeRemote) Capabilities() string {
-	return gitremotego.DefaultCapabilities
+func (p *Pfg) Capabilities() string {
+	return gitremote.DefaultCapabilities
 }
 
-func (p *PeerforgeRemote) List(forPush bool) ([]string, error) {
+func (p *Pfg) List(forPush bool) ([]string, error) {
 	out := make([]string, 0)
 
 	if !forPush {
@@ -226,7 +224,7 @@ func (p *PeerforgeRemote) List(forPush bool) ([]string, error) {
 					return nil, err
 				}
 
-				hash, err := gitremotego.HexFromCid(c)
+				hash, err := gitremote.HexFromCid(c)
 				if err != nil {
 					return nil, err
 				}
@@ -261,7 +259,7 @@ func (p *PeerforgeRemote) List(forPush bool) ([]string, error) {
 					return err
 				}
 
-				remoteRef, err = gitremotego.HexFromCid(refCid)
+				remoteRef, err = gitremote.HexFromCid(refCid)
 				if err != nil {
 					return err
 				}
@@ -279,7 +277,7 @@ func (p *PeerforgeRemote) List(forPush bool) ([]string, error) {
 	return out, nil
 }
 
-func (p *PeerforgeRemote) Push(local string, remote string) (string, error) {
+func (p *Pfg) Push(local string, remote string) (string, error) {
 	p.didPush = true
 
 	localRef, err := p.repo.Reference(plumbing.ReferenceName(local), true)
@@ -298,11 +296,9 @@ func (p *PeerforgeRemote) Push(local string, remote string) (string, error) {
 		}
 	}
 
-	log.Debug().Msgf("remote=%s ref=%s", remote, headHash)
-	push := core.NewPush(p.localDir, p.tracker, repo)
+	push := ipldgit.NewPush(p.localDir, p.tracker, repo)
 	push.NewNode = p.bigNodePatcher(p.tracker)
 
-	log.Debug().Msgf("PushHash(%s)", headHash)
 	err = push.PushHash(headHash)
 	if err != nil {
 		return "", fmt.Errorf("push: %v", err)
@@ -310,10 +306,9 @@ func (p *PeerforgeRemote) Push(local string, remote string) (string, error) {
 
 	hash := localRef.Hash()
 
-	log.Debug().Msgf("tracking %v", hash.String())
 	p.tracker.Set(remote, (&hash)[:])
 
-	c, err := core.CidFromHex(headHash)
+	c, err := ipldgit.CidFromHex(headHash)
 	if err != nil {
 		return "", fmt.Errorf("push: %v", err)
 	}
@@ -330,7 +325,8 @@ func (p *PeerforgeRemote) Push(local string, remote string) (string, error) {
 	}
 
 	if head == "" {
-		log.Debug().Msgf("push(%v, %v)", local, remote)
+		log.Debug().Msgf("ipfs.Add(%v, %v)", local, remote)
+
 		headRef, err := p.ipfs.Add(strings.NewReader("refs/heads/main"))
 		if err != nil {
 			return "", fmt.Errorf("push: %v", err)
@@ -342,36 +338,36 @@ func (p *PeerforgeRemote) Push(local string, remote string) (string, error) {
 		}
 	}
 
-	log.Debug().Msgf("sending event transaction...")
-	type EventsTx struct {
-		Events []*peerforge.Event `json:"events"`
-	}
-
-	data, err := json.Marshal(EventsTx{Events: []*peerforge.Event{
-		peerforge.NewEvent(
-			event.RepositoryInitialized,
-			uuid.New().String(),
-			1,
-			"peerforge.hubd",
-		),
-	}})
-
-	res, err := p.abci.BroadcastTxCommit(context.Background(), data)
-	if err != nil {
-		return "", err
-	}
-	if res.CheckTx.IsErr() || res.DeliverTx.IsErr() {
-		log.Debug().Msgf(err.Error())
-		log.Err(err).Send()
-		return "", err
-	}
+	//log.Debug().Msgf("sending event transaction...")
+	//type EventsTx struct {
+	//	Events []*peerforge.Event `json:"events"`
+	//}
+	//
+	//data, err := json.Marshal(EventsTx{Events: []*peerforge.Event{
+	//	peerforge.NewEvent(
+	//		RepositoryInitialized,
+	//		uuid.New().String(),
+	//		1,
+	//		"peerforge.hubd",
+	//	),
+	//}})
+	//
+	//res, err := p.abci.BroadcastTxCommit(context.Background(), data)
+	//if err != nil {
+	//	return "", err
+	//}
+	//if res.CheckTx.IsErr() || res.DeliverTx.IsErr() {
+	//	log.Debug().Msgf(err.Error())
+	//	log.Err(err).Send()
+	//	return "", err
+	//}
 
 	return local, nil
 }
 
 // bigNodePatcher returns a function which patches large object mapping into
 // the resulting object
-func (p *PeerforgeRemote) bigNodePatcher(tracker *core.Tracker) func(cid.Cid, []byte) error {
+func (p *Pfg) bigNodePatcher(tracker *ipldgit.Tracker) func(cid.Cid, []byte) error {
 	return func(hash cid.Cid, data []byte) error {
 		if len(data) > (1 << 21) {
 			c, err := p.ipfs.Add(bytes.NewReader(data))
@@ -383,8 +379,6 @@ func (p *PeerforgeRemote) bigNodePatcher(tracker *core.Tracker) func(cid.Cid, []
 				return err
 			}
 
-			log.Debug().Msgf("bigNodePatcher PatchLink(%s)", hash.String())
-
 			p.currentHash, err = p.ipfs.PatchLink(p.currentHash, "objects/"+hash.String(), c, true)
 			if err != nil {
 				return err
@@ -395,7 +389,7 @@ func (p *PeerforgeRemote) bigNodePatcher(tracker *core.Tracker) func(cid.Cid, []
 	}
 }
 
-func (p *PeerforgeRemote) getRef(name string) (string, error) {
+func (p *Pfg) getRef(name string) (string, error) {
 	r, err := p.ipfs.Cat(path.Join(p.remoteName, name))
 	if err != nil {
 		if isNoLink(err) {
@@ -414,7 +408,7 @@ func (p *PeerforgeRemote) getRef(name string) (string, error) {
 	return buf.String(), nil
 }
 
-func (p *PeerforgeRemote) paths(api *ipfs.Shell, pathStr string, level int) ([]refPath, error) {
+func (p *Pfg) paths(api *ipfs.Shell, pathStr string, level int) ([]refPath, error) {
 	links, err := api.List(pathStr)
 	if err != nil {
 		return nil, err
@@ -435,7 +429,7 @@ func (p *PeerforgeRemote) paths(api *ipfs.Shell, pathStr string, level int) ([]r
 			out = append(out, sub...)
 		case ipfs.TFile:
 			out = append(out, refPath{path.Join(pathStr, link.Name), RefPathRef, link.Hash})
-		case -1, 0: //unknown, assume git node
+		case -1, 0: //unknown, assume gitremote node
 			out = append(out, refPath{path.Join(pathStr, link.Name), RefPathHead, link.Hash})
 		default:
 			return nil, fmt.Errorf("unexpected link type %d", link.Type)

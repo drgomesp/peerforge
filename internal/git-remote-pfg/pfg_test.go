@@ -7,9 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	gitremotego "github.com/drgomesp/git-remote-go"
+	ipldgit "github.com/drgomesp/git-remote-ipld/core"
+	gitremotepfg "github.com/drgomesp/peerforge/internal/git-remote-pfg"
+	"github.com/drgomesp/peerforge/pkg/gitremote"
 	"github.com/go-git/go-git/v5"
-	"github.com/ipfs-shipyard/git-remote-ipld/core"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -19,8 +20,6 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/coretypes"
 	"github.com/tendermint/tendermint/types"
-
-	gitremotepfg "github.com/drgomesp/peerforge/internal/git-remote-pfg"
 )
 
 type abciClientMock struct {
@@ -62,6 +61,12 @@ const EmptyRepo = "QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"
 func init() {
 	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Err(err).Send()
+	}
+	os.Setenv("GIT_DIR", path.Join(cwd, "testutil", "git"))
 }
 
 func TestIPFS_Capabilities(t *testing.T) {
@@ -76,7 +81,7 @@ func TestIPFS_Capabilities(t *testing.T) {
 	}{
 		{
 			name: "test capabilities",
-			want: gitremotego.DefaultCapabilities,
+			want: gitremote.DefaultCapabilities,
 		},
 	}
 
@@ -205,15 +210,15 @@ func TestIPFS_Fetch(t *testing.T) {
 	}
 }
 
-func setupTest(t *testing.T, abciClient client.ABCIClient, remoteName string) *gitremotepfg.PeerforgeRemote {
+func setupTest(t *testing.T, abciClient client.ABCIClient, remoteName string) *gitremotepfg.Pfg {
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Err(err).Send()
 	}
 
-	_ = os.Setenv("GIT_DIR", path.Join(cwd, "..", "..", "testutil", "git"))
+	_ = os.Setenv("GIT_DIR", path.Join(cwd, "..", "..", "..", "testutil", "git"))
 
-	localDir, err := core.GetLocalDir()
+	localDir, err := ipldgit.GetLocalDir()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,13 +233,13 @@ func setupTest(t *testing.T, abciClient client.ABCIClient, remoteName string) *g
 		}
 	}
 
-	tracker, err := core.NewTracker(localDir)
+	tracker, err := ipldgit.NewTracker(localDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	ipfsPath := "localhost:45005" // brave browser IPFS
-	remote, err := gitremotepfg.NewPeerforgeRemote(abciClient, ipfsPath, remoteName)
+	remote, err := gitremotepfg.NewPfg(abciClient, ipfsPath, remoteName)
 	assert.NoError(t, err)
 	assert.NotNil(t, remote)
 
@@ -245,6 +250,6 @@ func setupTest(t *testing.T, abciClient client.ABCIClient, remoteName string) *g
 
 func teardownTest(t *testing.T) {
 	cwd, _ := os.Getwd()
-	gitDir := path.Join(cwd, "..", "..", "testutil", "git")
+	gitDir := path.Join(cwd, "..", "..", "testutil", "gitremote")
 	assert.NoError(t, os.RemoveAll(path.Join(cwd, gitDir)))
 }
