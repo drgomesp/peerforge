@@ -4,13 +4,13 @@ import (
 	"os"
 	"strings"
 
-	gitremotepfg "github.com/drgomesp/peerforge/internal/git-remote-pfg"
-	"github.com/drgomesp/peerforge/pkg/gitremote"
 	shell "github.com/ipfs/go-ipfs-api"
 	_ "github.com/joho/godotenv/autoload"
+	ipldgit "github.com/peerforge/git-remote-ipldprime/core"
+	gitremotepfg "github.com/peerforge/peerforge/internal/git-remote-pfg"
+	"github.com/peerforge/peerforge/pkg/gitremote"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 )
 
 const IpfsURL = "localhost:45005"
@@ -44,27 +44,29 @@ func main() {
 		log.Warn().Msg("missing repository path ($GIT_DIR)... using current directory")
 		cwd, err := os.Getwd()
 		if err != nil {
-			log.Err(err).Send()
+			log.Fatal().Err(err).Send()
 		}
 		os.Setenv("GIT_DIR", cwd)
 	}
 
-	abci, err := rpchttp.New("http://localhost:26657")
+	tracker, err := ipldgit.NewTracker()
+	if err != nil {
+		if err != nil {
+			log.Fatal().Err(err).Send()
+		}
+	}
+
+	handler, err := gitremotepfg.NewPfg(tracker, remoteName)
 	if err != nil {
 		log.Err(err).Send()
 	}
 
-	handler, err := gitremotepfg.NewPfg(abci, os.Getenv(shell.EnvDir), remoteName)
+	proto, err := gitremote.NewProtocol("prefix", tracker, handler)
 	if err != nil {
-		log.Err(err).Send()
-	}
-
-	proto, err := gitremote.NewProtocol("prefix", handler)
-	if err != nil {
-		log.Err(err).Send()
+		log.Fatal().Err(err).Send()
 	}
 
 	if err := proto.Run(os.Stdin, os.Stdout); err != nil {
-		log.Err(err).Send()
+		log.Fatal().Err(err).Send()
 	}
 }

@@ -7,11 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	ipldgit "github.com/drgomesp/git-remote-ipld/core"
-	gitremotepfg "github.com/drgomesp/peerforge/internal/git-remote-pfg"
-	"github.com/drgomesp/peerforge/pkg/gitremote"
-	"github.com/go-git/go-git/v5"
 	_ "github.com/joho/godotenv/autoload"
+	ipldgit "github.com/peerforge/git-remote-ipldprime/core"
+	gitremotepfg "github.com/peerforge/peerforge/internal/git-remote-pfg"
+	"github.com/peerforge/peerforge/pkg/gitremote"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
@@ -66,7 +65,7 @@ func init() {
 	if err != nil {
 		log.Err(err).Send()
 	}
-	os.Setenv("GIT_DIR", path.Join(cwd, "testutil", "git"))
+	os.Setenv("GIT_DIR", path.Join(cwd, "..", "..", "testutil", "git"))
 }
 
 func TestIPFS_Capabilities(t *testing.T) {

@@ -2,13 +2,15 @@ package gitremote
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"strings"
 	"testing"
 
-	ipldgit "github.com/drgomesp/git-remote-ipld/core"
 	"github.com/go-git/go-git/v5"
+	gitremote "github.com/peerforge/git-remote-ipldprime"
+	ipldgit "github.com/peerforge/git-remote-ipldprime/core"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +28,7 @@ func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
-var _ ProtocolHandler = &handlerMock{}
+var _ gitremote.ProtocolHandler = &handlerMock{}
 
 type handlerMock struct {
 	mock.Mock
@@ -54,7 +56,7 @@ func (h *handlerMock) List(forPush bool) ([]string, error) {
 	return args.Get(0).([]string), args.Error(1)
 }
 
-func (h *handlerMock) Push(localRef string, remoteRef string) (string, error) {
+func (h *handlerMock) Push(ctx context.Context, localRef string, remoteRef string) (string, error) {
 	args := h.Called(localRef, remoteRef)
 	return args.String(0), args.Error(1)
 }

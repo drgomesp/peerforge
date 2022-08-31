@@ -13,18 +13,18 @@ import (
 	"path/filepath"
 	"time"
 
-	peerforgeevent "github.com/drgomesp/peerforge/internal/git-remote-pfg"
-	peerforge "github.com/drgomesp/peerforge/pkg"
-	"github.com/drgomesp/peerforge/pkg/gitremote"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/google/uuid"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/peer"
 	ssi "github.com/nuts-foundation/go-did"
 	"github.com/nuts-foundation/go-did/did"
+	peerforgeevent "github.com/peerforge/peerforge/internal/git-remote-pfg"
+	peerforge "github.com/peerforge/peerforge/pkg"
+	"github.com/peerforge/peerforge/pkg/gitremote"
 	"github.com/rs/zerolog/log"
 	"github.com/tendermint/tendermint/rpc/client"
 )
@@ -119,6 +119,7 @@ func (i *Initializer) Init(dir string) (err error) {
 				When: time.Now(),
 			},
 		})
+
 		if err != nil {
 			return err
 		}

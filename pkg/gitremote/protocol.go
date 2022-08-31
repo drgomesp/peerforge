@@ -2,6 +2,7 @@ package gitremote
 
 import (
 	"bufio"
+	"context"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -9,8 +10,9 @@ import (
 	"path"
 	"strings"
 
-	ipldgit "github.com/drgomesp/git-remote-ipld/core"
 	"github.com/go-git/go-git/v5"
+	gitremote "github.com/peerforge/git-remote-ipldprime"
+	ipldgit "github.com/peerforge/git-remote-ipldprime/core"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -25,12 +27,12 @@ type Protocol struct {
 	localDir string
 
 	tracker  *ipldgit.Tracker
-	handler  ProtocolHandler
+	handler  gitremote.ProtocolHandler
 	repo     *git.Repository
 	lazyWork []func() (string, error)
 }
 
-func NewProtocol(prefix string, handler ProtocolHandler) (*Protocol, error) {
+func NewProtocol(prefix string, tracker *ipldgit.Tracker, handler gitremote.ProtocolHandler) (*Protocol, error) {
 	log.Info().Msgf("GIT_DIR=%s", os.Getenv("GIT_DIR"))
 
 	localDir, err := GetLocalDir()
@@ -46,11 +48,6 @@ func NewProtocol(prefix string, handler ProtocolHandler) (*Protocol, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	tracker, err := ipldgit.NewTracker(localDir)
-	if err != nil {
-		return nil, fmt.Errorf("fetch: %v", err)
 	}
 
 	if err = handler.Initialize(tracker, repo); err != nil {
@@ -128,7 +125,7 @@ func (p *Protocol) push(src string, dst string, force bool) {
 	_ = force // TODO: handle force push
 
 	p.lazyWork = append(p.lazyWork, func() (string, error) {
-		done, err := p.handler.Push(src, dst)
+		done, err := p.handler.Push(context.Background(), src, dst)
 		if err != nil {
 			return "", err
 		}

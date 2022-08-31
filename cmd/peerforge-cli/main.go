@@ -3,12 +3,11 @@ package main
 import (
 	"os"
 
-	"github.com/drgomesp/peerforge/internal/peerforge-cli/repository"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/peerforge/peerforge/internal/peerforge-cli/repository"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
-	"github.com/urfave/cli/v2"
 )
 
 func init() {

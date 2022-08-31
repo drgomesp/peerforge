@@ -5,7 +5,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/drgomesp/peerforge/internal/peerforge-cli/repository"
+	"github.com/peerforge/peerforge/internal/peerforge-cli/repository"
 	"github.com/stretchr/testify/assert"
 )
 
