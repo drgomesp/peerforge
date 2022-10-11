@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/dgraph-io/badger/v3"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/peerforge/peerforge/internal/peerhubd/abci"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -19,6 +19,9 @@ import (
 	tendermintlog "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/service"
 	tendermintnode "github.com/tendermint/tendermint/node"
+	"github.com/urfave/cli/v2"
+
+	"github.com/peerforge/peerforge/internal/peerhubd/abci"
 )
 
 // var socketAddr string

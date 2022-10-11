@@ -3,9 +3,11 @@ package abci
 import (
 	"encoding/json"
 
-	peerforge "github.com/peerforge/peerforge/pkg"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/rs/zerolog/log"
 	"github.com/tendermint/tendermint/abci/types"
+
+	peerforge "github.com/peerforge/peerforge/pkg"
 )
 
 const (

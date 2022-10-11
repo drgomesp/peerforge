@@ -18,7 +18,7 @@ tasks:
     deps:
       - build:cli
       - build:hubd
-      - build:gitremote-remote-pfg
+      - build:git-remote-pfg
     silent: false
 
   build:cli:
@@ -33,5 +33,5 @@ tasks:
 
   build:git-remote-pfg:
       cmds:
-        - sudo go build -o /usr/local/bin/gitremote-remote-pfg cmd/gitremote-remote-pfg/*
+        - sudo go build -o /usr/local/bin/git-remote-pfg cmd/git-remote-pfg/*
       silent: false

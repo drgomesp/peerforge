@@ -6,11 +6,12 @@ import (
 
 	shell "github.com/ipfs/go-ipfs-api"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
 	ipldgit "github.com/peerforge/git-remote-ipldprime/core"
 	gitremotepfg "github.com/peerforge/peerforge/internal/git-remote-pfg"
 	"github.com/peerforge/peerforge/pkg/gitremote"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 const IpfsURL = "localhost:45005"

@@ -14,11 +14,12 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage"
+	"github.com/rs/zerolog/log"
+
 	gitremote "github.com/peerforge/git-remote-ipldprime"
 	"github.com/peerforge/git-remote-ipldprime/core"
 	ipldgitprime "github.com/peerforge/go-ipld-gitprime"
 	"github.com/peerforge/go-ipld-gitprime/store"
-	"github.com/rs/zerolog/log"
 )
 
 const (
