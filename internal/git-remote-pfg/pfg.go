@@ -16,10 +16,10 @@ import (
 	"github.com/ipld/go-ipld-prime/storage"
 	"github.com/rs/zerolog/log"
 
-	gitremote "github.com/peerforge/git-remote-ipldprime"
-	"github.com/peerforge/git-remote-ipldprime/core"
-	ipldgitprime "github.com/peerforge/go-ipld-gitprime"
-	"github.com/peerforge/go-ipld-gitprime/store"
+	gitremote "github.com/drgomesp/git-remote-ipldprime"
+	"github.com/drgomesp/git-remote-ipldprime/core"
+	ipldgitprime "github.com/drgomesp/go-ipld-gitprime"
+	"github.com/drgomesp/go-ipld-gitprime/store"
 )
 
 const (
@@ -177,7 +177,7 @@ func (p *Pfg) bigNodePatcher(tracker *core.Tracker) func(context.Context, string
 	return func(ctx context.Context, hash string, data []byte) error {
 		log.Debug().Msgf("size: %vb", len(data))
 		if len(data) > (1 << 21) {
-			log.Debug().Msgf(" > less than: %ib", 1<<21)
+			log.Debug().Msgf(" > less than: %vb", 1<<21)
 			if err := p.store.Put(ctx, p.currentHash, data); err != nil {
 				return err
 			}

@@ -1,10 +1,24 @@
-# PeerForge
+<h1 align="center"><bold>PeerForge</bold></h1>
 
-PeerForge is a decentralized protocol for code sharing and collaboration.
+<div align="center">
 
-[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![madeby](https://img.shields.io/badge/made%20by-%40drgomesp-blue)](https://github.com/drgomesp/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/drgomesp/peerforge)](https://goreportcard.com/report/github.com/drgomesp/peerforge)
+[![build](https://img.shields.io/github/workflow/status/drgomesp/peerforge/Go%20Test/main)](https://github.com/drgomesp/peerforge/actions)
+[![codecov](https://codecov.io/gh/drgomesp/peerforge/branch/main/graph/badge.svg?token=BRMFJRJV2X)](https://codecov.io/gh/drgomesp/peerforge)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
 
+</div>
 
+<p align="center">PeerForge is a decentralized protocol for code sharing and collaboration.</p>
+
+## Table of Contents
+
+- [Install](#install)
+- [Features](#features)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
 ## Table of Contents
 
 - [Introduction](#introduction)

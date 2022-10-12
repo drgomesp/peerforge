@@ -22,11 +22,12 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	ssi "github.com/nuts-foundation/go-did"
 	"github.com/nuts-foundation/go-did/did"
+	"github.com/rs/zerolog/log"
+	"github.com/tendermint/tendermint/rpc/client"
+
 	peerforgeevent "github.com/peerforge/peerforge/internal/git-remote-pfg"
 	peerforge "github.com/peerforge/peerforge/pkg"
 	"github.com/peerforge/peerforge/pkg/gitremote"
-	"github.com/rs/zerolog/log"
-	"github.com/tendermint/tendermint/rpc/client"
 )
 
 var (

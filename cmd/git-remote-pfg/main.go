@@ -9,7 +9,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	ipldgit "github.com/peerforge/git-remote-ipldprime/core"
+	ipldgit "github.com/drgomesp/git-remote-ipldprime/core"
+
 	gitremotepfg "github.com/peerforge/peerforge/internal/git-remote-pfg"
 	"github.com/peerforge/peerforge/pkg/gitremote"
 )

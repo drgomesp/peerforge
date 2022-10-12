@@ -2,12 +2,14 @@ module github.com/peerforge/peerforge
 
 go 1.18
 
-replace github.com/peerforge/git-remote-ipldprime => ../git-remote-ipldprime
-
-replace github.com/peerforge/go-ipld-gitprime => ../go-ipld-gitprime
+replace (
+	github.com/drgomesp/git-remote-ipldprime => ../git-remote-ipldprime
+	github.com/drgomesp/go-ipld-gitprime => ../go-ipld-gitprime
+)
 
 require (
-	github.com/dgraph-io/badger/v3 v3.2103.2
+	github.com/drgomesp/git-remote-ipldprime v0.0.0-20221012194053-18c958501710
+	github.com/drgomesp/go-ipld-gitprime v0.0.0-20221012194121-3a9557ac5b5b
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/google/uuid v1.3.0
 	github.com/ipfs/go-cid v0.3.2
@@ -17,8 +19,6 @@ require (
 	github.com/libp2p/go-libp2p v0.23.2
 	github.com/multiformats/go-multihash v0.2.1
 	github.com/nuts-foundation/go-did v0.3.0
-	github.com/peerforge/git-remote-ipldprime v0.0.0-00010101000000-000000000000
-	github.com/peerforge/go-ipld-gitprime v0.0.0-00010101000000-000000000000
 	github.com/rs/zerolog v1.28.0
 	github.com/stretchr/testify v1.8.0
 	github.com/tendermint/tendermint v0.35.9
@@ -31,7 +31,6 @@ require (
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/btcsuite/btcd v0.22.1 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cloudflare/circl v1.2.0 // indirect
 	github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3 // indirect
@@ -48,11 +47,9 @@ require (
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
-	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/google/flatbuffers v1.12.1 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/ipfs/go-block-format v0.0.3 // indirect
 	github.com/ipfs/go-ipfs-files v0.1.1 // indirect
@@ -102,8 +99,7 @@ require (
 	github.com/tendermint/tm-db v0.6.7 // indirect
 	github.com/whyrusleeping/tar-utils v0.0.0-20201201191210-20a61371de5b // indirect
 	github.com/xanzy/ssh-agent v0.3.2 // indirect
-	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2 // indirect
+	golang.org/x/crypto v0.0.0-20221012134737-56aed061732a // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20221004154528-8021a29435af // indirect
 	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect

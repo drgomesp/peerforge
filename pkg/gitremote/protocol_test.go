@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	gitremote "github.com/drgomesp/git-remote-ipldprime"
+	ipldgit "github.com/drgomesp/git-remote-ipldprime/core"
 	"github.com/go-git/go-git/v5"
-	gitremote "github.com/peerforge/git-remote-ipldprime"
-	ipldgit "github.com/peerforge/git-remote-ipldprime/core"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"

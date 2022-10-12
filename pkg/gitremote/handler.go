@@ -2,7 +2,7 @@ package gitremote
 
 //
 //import (
-//	ipldgit "github.com/peerforge/git-remote-ipldprime/core"
+//	ipldgit "github.com/drgomesp/git-remote-ipldprime/core"
 //)
 //
 //type ProtocolHandler interface {

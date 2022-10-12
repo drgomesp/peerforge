@@ -15,7 +15,7 @@ package gitremotepfg_test
 //	"github.com/stretchr/testify/mock"
 //	"github.com/tendermint/tendermint/types"
 //
-//	ipldgit "github.com/peerforge/git-remote-ipldprime/core"
+//	ipldgit "github.com/drgomesp/git-remote-ipldprime/core"
 //	gitremotepfg "github.com/peerforge/peerforge/internal/git-remote-pfg"
 //	"github.com/peerforge/peerforge/pkg/gitremote"
 //)
