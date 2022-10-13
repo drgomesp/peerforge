@@ -5,10 +5,14 @@ package gitremotepfg
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/ipld/go-ipld-prime"
@@ -21,6 +25,16 @@ import (
 	ipldgitprime "github.com/drgomesp/go-ipld-gitprime"
 	"github.com/drgomesp/go-ipld-gitprime/store"
 )
+
+type IPFS interface {
+	DagPut(data interface{}, inputCodec, storeCodec string) (string, error)
+	Add(r io.Reader, options ...interface{}) (string, error)
+	PatchLink(root, path, childhash string, create bool) (string, error)
+	Get(hash, outdir string) error
+	List(path string) ([]ipld.Link, error)
+	Cat(path string) (io.ReadCloser, error)
+	ResolvePath(path string) (string, error)
+}
 
 const (
 	LargeObjectDir    = "objects"
@@ -50,8 +64,9 @@ type Pfg struct {
 	linkSys *ipld.LinkSystem
 	repo    *git.Repository
 	store   ipldgitprime.Store
+	tracker *core.Tracker
 
-	tracker     *core.Tracker
+	largeObjs   map[string]string
 	pushed      bool
 	localDir    string
 	remoteName  string
@@ -108,10 +123,68 @@ func (p *Pfg) Initialize(tracker *core.Tracker, repo *git.Repository) error {
 }
 
 func (p *Pfg) Finish() error {
+	if p.pushed {
+		if err := p.fillMissingLobjs(p.tracker); err != nil {
+			return err
+		}
+
+		log.Printf("Pushed to IPFS as \x1b[32mipld://%s\x1b[39m\n", p.currentHash)
+	}
+
 	return nil
 }
-func (p *Pfg) ProvideBlock(identifier string, tracker *core.Tracker) ([]byte, error) {
-	return nil, nil
+
+func (p *Pfg) ProvideBlock(cid string, tracker *core.Tracker) ([]byte, error) {
+	if p.largeObjs == nil {
+		if err := p.loadObjectMap(); err != nil {
+			return nil, err
+		}
+	}
+
+	mappedCid, ok := p.largeObjs[cid]
+	if !ok {
+		return nil, core.ErrNotProvided
+	}
+
+	if err := tracker.Set(LObjTrackerPrefix+"/"+cid, []byte(mappedCid)); err != nil {
+		return nil, err
+	}
+
+	data, err := p.store.Get(context.TODO(), mappedCid)
+	if err != nil {
+		return nil, errors.New("get error")
+	}
+
+	err = p.store.Put(context.TODO(), "raw", data)
+	if err != nil {
+		return nil, err
+	}
+
+	//if realCid != cid {
+	//	return nil, fmt.Errorf("unexpected cid for provided block %s != %s", realCid, cid)
+	//}
+
+	return data, nil
+}
+
+func (p *Pfg) loadObjectMap() error {
+	p.largeObjs = map[string]string{}
+
+	links, err := p.store.Get(context.TODO(), path.Join(p.currentHash, HEAD))
+	if err != nil {
+		if isNoLink(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	spew.Printf("links=%v\n", links)
+	//for _, link := range links {
+	//	h.largeObjs[link.Name] = link.Hash
+	//}
+
+	return nil
 }
 
 func (p *Pfg) Capabilities() string {
@@ -119,7 +192,45 @@ func (p *Pfg) Capabilities() string {
 }
 
 func (p *Pfg) List(forPush bool) ([]string, error) {
-	return []string{}, nil
+	ctx := context.Background()
+	out := make([]string, 0)
+
+	if !forPush {
+		refs, err := p.paths(ctx, nil, p.remoteName, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ref := range refs {
+			switch ref.rType {
+			case RefPathHead:
+				r := path.Join(strings.Split(ref.path, "/")[1:]...)
+				c, err := core.CidFromHex(ref.hash)
+				if err != nil {
+					return nil, err
+				}
+
+				hash, err := core.HexFromCid(c)
+				if err != nil {
+					return nil, err
+				}
+
+				out = append(out, fmt.Sprintf("%s %s", hash, r))
+			case RefPathRef:
+				r := path.Join(strings.Split(ref.path, "/")[1:]...)
+				dest, err := p.getRef(ctx, r)
+				if err != nil {
+					return nil, err
+				}
+				out = append(out, fmt.Sprintf("@%s %s", dest, r))
+			}
+
+		}
+	} else {
+
+	}
+
+	return out, nil
 }
 
 func (p *Pfg) Push(ctx context.Context, local string, remote string) (string, error) {
@@ -182,18 +293,16 @@ func (p *Pfg) bigNodePatcher(tracker *core.Tracker) func(context.Context, string
 				return err
 			}
 
-			//if err := tracker.Set(LObjTrackerPrefix+"/"+hash, []byte(nil)); err != nil {
-			//	return err
-			//}
+			if err := tracker.Set(LObjTrackerPrefix+"/"+hash, []byte(nil)); err != nil {
+				return err
+			}
 
 			k := path.Join(p.currentHash, "objects", hash[:2], hash[2:])
 			if err := p.store.Put(ctx, k, data); err != nil {
 				return err
 			}
 
-			log.Debug().Str("current_hash", p.currentHash).Msgf("bigNodePatcher")
 			p.currentHash = k
-			log.Debug().Str("current_hash", p.currentHash).Msgf("bigNodePatcher")
 		}
 
 		return nil
@@ -218,6 +327,63 @@ func (p *Pfg) getRef(ctx context.Context, name string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func (p *Pfg) paths(ctx context.Context, api IPFS, pth string, level int) ([]refPath, error) {
+	//links, err := api.List(pth)
+	//ref, err := p.getRef(ctx, pth)
+
+	//if err != nil {
+	//	panic(err)
+	//}
+
+	out := make([]refPath, 0)
+
+	//if ref != nil {
+	v, err := p.store.Get(ctx, path.Join(pth, HEAD))
+	if err != nil {
+		return nil, err
+	}
+
+	ref, err := p.getRef(ctx, string(v))
+	if err != nil {
+		return nil, err
+	}
+	out = append(out, refPath{
+		path.Join(pth, string(v)),
+		RefPathHead,
+		string(ref),
+	})
+
+	return out, nil
+}
+func (p *Pfg) fillMissingLobjs(tracker *core.Tracker) error {
+	if p.largeObjs == nil {
+		if err := p.loadObjectMap(); err != nil {
+			return err
+		}
+	}
+
+	tracked, err := tracker.ListPrefixed(LObjTrackerPrefix)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range tracked {
+		if _, has := p.largeObjs[k]; has {
+			continue
+		}
+
+		k = strings.TrimPrefix(k, LObjTrackerPrefix+"/")
+
+		p.largeObjs[k] = v
+		//p.currentHash, err = p.api.PatchLink(p.currentHash, "objects/"+k, v, true)
+		//if err != nil {
+		//	return err
+		//}
+	}
+
+	return nil
 }
 
 func isNoLink(err error) bool {

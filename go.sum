@@ -274,10 +274,6 @@ github.com/docker/docker v20.10.7+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05b
 github.com/docker/docker v20.10.17+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/go-connections v0.4.0/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5XhDvyHbTtUxmeec=
 github.com/docker/go-units v0.4.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
-github.com/drgomesp/git-remote-ipldprime v0.0.0-20221012194053-18c958501710 h1:BQaCrP6WdavQLoD0rp0PgQgeuXBJ7RZBbeRS9kiJTEg=
-github.com/drgomesp/git-remote-ipldprime v0.0.0-20221012194053-18c958501710/go.mod h1:RB+luYNWf0Vsa7084aoggXNvHBv3fuzJdPDIGnMgZKY=
-github.com/drgomesp/go-ipld-gitprime v0.0.0-20221012194121-3a9557ac5b5b h1:r8bQEqnzfimuioTR5y1G9PJ9onRcKekL44FZzldxrGU=
-github.com/drgomesp/go-ipld-gitprime v0.0.0-20221012194121-3a9557ac5b5b/go.mod h1:LKpZKI7SHg7yg40jY+XQOmj7fXPVkRB3wGabKeJ32iw=
 github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=

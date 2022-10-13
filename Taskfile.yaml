@@ -17,18 +17,12 @@ tasks:
   build:
     deps:
       - build:cli
-      - build:hubd
       - build:git-remote-pfg
     silent: false
 
   build:cli:
     cmds:
       - sudo go build -o /usr/local/bin/peerforge-cli cmd/peerforge-cli/*
-    silent: false
-
-  build:hubd:
-    cmds:
-      - sudo go build -o /usr/local/bin/peerhubd cmd/peerhubd/*
     silent: false
 
   build:git-remote-pfg:
